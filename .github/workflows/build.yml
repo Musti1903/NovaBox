@@ -1,0 +1,29 @@
+name: Build NovaBox APK
+on:
+  push:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Zip'i ac
+        run: unzip -q "$(ls NovaBox-*.zip | head -n 1)"
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: SDK lisans ve NDK
+        run: |
+          SDKM=/usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager
+          yes | $SDKM --licenses > /dev/null || true
+          $SDKM --install "platforms;android-35" "build-tools;35.0.0" "ndk;29.0.13846066"
+      - name: Derle
+        working-directory: src
+        run: |
+          chmod +x ./gradlew
+          ./gradlew :app:assembleRelease --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NovaBox-apk
+          path: src/app/build/outputs/apk/release/*.apk
